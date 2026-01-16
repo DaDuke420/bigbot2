@@ -2,6 +2,7 @@
 
 import os
 import csv
+import storage
 import types
 import importlib
 from datetime import date
@@ -91,7 +92,7 @@ def test_compare_file_to_dict_detects_xp_delta_and_99_milestone(tmp_path):
     # Craft a prior file with Attack just below 99 xp threshold
     player = "Tester"
     data_type = "skills"
-    csv_file = bot.create_data_path(player, data_type)
+    csv_file = storage.create_data_path(player, data_type)
     os.makedirs(os.path.dirname(csv_file), exist_ok=True)
 
     prior = {"Attack": "13034430"}  # one below 13,034,431
@@ -111,7 +112,7 @@ def test_compare_file_to_dict_detects_xp_delta_and_99_milestone(tmp_path):
 def test_compare_file_to_dict_detects_kc_delta_and_100_milestone(tmp_path):
     player = "Tester"
     data_type = "kc"
-    csv_file = bot.create_data_path(player, data_type)
+    csv_file = storage.create_data_path(player, data_type)
     os.makedirs(os.path.dirname(csv_file), exist_ok=True)
 
     prior = {"Zulrah": "199"}
@@ -134,7 +135,7 @@ def test_write_player_info_to_csv_roundtrips_dict(tmp_path):
 
     bot.write_player_info_to_csv(data, player, info_type)
     
-    csv_file = bot.create_data_path(player, info_type)
+    csv_file = storage.create_data_path(player, info_type)
 
     path = tmp_path / csv_file
     assert path.exists()
@@ -198,8 +199,8 @@ def test_check_new_info_and_update_data_compares_and_writes(monkeypatch, tmp_pat
 
     # Ensure it wrote the new values back
     
-    skills_path = bot.create_data_path(player, "skills")
-    kc_path = bot.create_data_path(player, "kc")
+    skills_path = storage.create_data_path(player, "skills")
+    kc_path = storage.create_data_path(player, "kc")
     
     with open(tmp_path / skills_path, newline="") as f:
         rows = list(csv.DictReader(f))

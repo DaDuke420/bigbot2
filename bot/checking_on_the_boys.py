@@ -5,12 +5,10 @@ import math
 import os
 import random
 import requests
+import storage
 from datetime import date
 from typing import Dict, Optional, Tuple
 
-
-def create_data_path(player, data_type):
-    return f"{config.DATA_DIR}\\{player}_{data_type}.csv"
 
 def get_player_info(player_name):
     response = requests.get(config.HISCORES_URL + player_name)
@@ -45,7 +43,7 @@ def unpack_info(response):
     return xp, kc
 
 def compare_file_to_dict(player_info, player_name, data_type):
-    csv_file = create_data_path(player_name, data_type)
+    csv_file = storage.create_data_path(player_name, data_type)
     with open(csv_file, mode='r') as f:
         reader = csv.reader(f)
         curr_row = 0
@@ -78,7 +76,7 @@ def compare_file_to_dict(player_info, player_name, data_type):
 def write_player_info_to_csv(player_info, player_name, data_type):
     os.makedirs(config.DATA_DIR, exist_ok=True)
     
-    csv_name = create_data_path(player_name, data_type)
+    csv_name = storage.create_data_path(player_name, data_type)
     headers = player_info.keys()
     with open(csv_name, mode='w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=headers)
@@ -92,8 +90,8 @@ def check_new_info_and_update_data(player_name):
     xp_updates = None
     skill_discrepencies = {}
     new_milestones = []
-    skills_csv_name = create_data_path(player_name, "skills")
-    kc_csv_name = create_data_path(player_name, "kc")
+    skills_csv_name = storage.create_data_path(player_name, "skills")
+    kc_csv_name = storage.create_data_path(player_name, "kc")
     if os.path.exists(skills_csv_name):
         skill_discrepencies, skill_milestones = compare_file_to_dict(player_info, player_name, "skills")
         new_milestones.extend(skill_milestones)
@@ -142,7 +140,7 @@ def log_new_daily_kc_highs(
         as_of = date.today()
 
     os.makedirs(storage_dir, exist_ok=True)
-    csv_path = create_data_path(player_name, "kc_daily_highs")
+    csv_path = storage.create_data_path(player_name, "kc_daily_highs")
 
     # Load existing highs
     highs: Dict[str, Tuple[int, str]] = {}  # boss -> (highest_kc, achieved_on)
@@ -193,7 +191,7 @@ def get_highest_one_day_kc_per_boss(
 
     If the file doesn't exist yet, returns {}.
     """
-    csv_path = create_data_path(player_name, "kc_daily_highs")
+    csv_path = storage.create_data_path(player_name, "kc_daily_highs")
     if not os.path.exists(csv_path):
         return {}
 
