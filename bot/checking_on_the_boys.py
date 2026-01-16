@@ -1,3 +1,4 @@
+import config
 import csv
 import logging
 import math
@@ -7,122 +8,18 @@ import requests
 from datetime import date
 from typing import Dict, Optional, Tuple
 
-DATA_DIR = os.environ.get("GIM_BOT_DATA_DIR", "data")
-
-url = "https://secure.runescape.com/m=hiscore_oldschool/index_lite.ws?player="
-
-skill_row_order = ['Total', 'Attack', 'Defense', 'Strength',
-                       'Hitpoints', 'Ranged', 'Prayer', 'Magic',
-                       'Cooking', 'Woodcutting', 'Fletching', 'Fishing',
-                       'Firemaking', 'Crafting', 'Smithing', 'Mining',
-                       'Herblore', 'Agility', 'Thieving', 'Slayer',
-                       'Farming', 'Runecrafting', 'Hunter', 'Construction',
-                       'Sailing']
-kc_mapping = {
-    32: "Total Clues",
-    33: "Beginner Clues",
-    34: "Easy Clues",
-    35: "Medium Clues",
-    36: "Hard Clues",
-    37: "Elite Clues",
-    38: "Master Clues",
-    40: "Soul Wars",
-    42: "Guardians of the Rift",
-    43: "Glory",
-    44: "Collections logged",
-    45: "Abyssal Sire",
-    46: "Alchemical Hydra",
-    47: "Amoxliatl",
-    48: "Araxxor",
-    49: "Artio",
-    50: "Barrows",
-    51: "Bryophita",
-    52: "Callisto",
-    53: "Calvar'ion",
-    54: "Cerberus",
-    55: "Chambers of Xeric",
-    56: "Chambers of Xeric CM",
-    57: "Chaos Elemental",
-    58: "Chaos Fanatic",
-    59: "Commander Zilyana",
-    60: "Corp",
-    61: "Crazy Archeologist",
-    62: "Dagganoth Prime",
-    63: "Dagganoth Rex",
-    64: "Dagganoth Supreme",
-    65: "Degranged Archeologist",
-    66: "Doom",
-    67: "Duke Succum",
-    68: "General Graardor",
-    69: "Giant Mole",
-    70: "Grotesque Guardians",
-    71: "Hespori",
-    72: "KQ",
-    73: "King Black Dragon",
-    74: "Kraken",
-    75: "Kree'ara",
-    76: "K'ril Tsutsaroth",
-    77: "Moons",
-    78: "Mimic",
-    79: "Nex",
-    80: "Nightmare",
-    81: "Phosani's Nightmare",
-    82: "Obor",
-    83: "Grumbler",
-    84: "Sarachnis",
-    85: "Scorpia",
-    86: "Scurrius",
-    87: "Shellbane Griffon",
-    88: "Skotizo",
-    89: "Sol Heredit",
-    90: "Spidel",
-    91: "Tempoross",
-    92: "Scrub Gauntlet",
-    93: "Corrupted Gauntlet",
-    94: "Huey Lewis",
-    95: "Leviathan",
-    96: "Royal Titans",
-    97: "Whisperer",
-    98: "Theater of Blood",
-    99: "Theater of Blood HM",
-    100: "Thermy",
-    101: "Normal Tombs of Amascut",
-    102: "Expert Tombs of Amascut",
-    103: "Zuk",
-    104: "Jad",
-    105: "Vardorvis",
-    106: "Venenatus",
-    107: "Vet'ion",
-    108: "Vorkath",
-    109: "The Todt",
-    110: "Yama",
-    111: "Zalcano",
-    112: "Zulrah"
-}
-
-skip_list = [39, 40, 41, 42, 30]
-
-gim_members = ['DaDuke42069', 'DaEmperor69', 'DaQueen42069', 'DaOligarch', 'VirginCape', 'Huge Weeb', 'DaSerf']
-newsletter_members = ['DaDuke42069', 'DaEmperor69', 'DaQueen42069', 'DaOligarch', 'Huge Weeb', 'DaSerf']
-
-editions = {"Daily": 
-    [f"Hello,\nWelcome to the DaKings GIM Newsletter for {date.today()}! Let's see what the goons have been up to.\n\n",
-    "Another banger day for the boys! See you next time!"], 
-    "Weekday": [f"Hello,\nWelcome to the DaKings GIM Newsletter for {date.today()}! Let's see what the goons have gotten done over a long work week.\n\n", "Another banger week for the boys! See you next time!"],
-    "Weekend": ""}
-
 
 def create_data_path(player, data_type):
-    return f"{DATA_DIR}\\{player}_{data_type}.csv"
+    return f"{config.DATA_DIR}\\{player}_{data_type}.csv"
 
 def get_player_info(player_name):
-    response = requests.get(url + player_name)
+    response = requests.get(config.HISCORES_URL + player_name)
     attempts = 1
 
     while attempts < 5:
         if response.status_code == 200:
             return unpack_info(response)
-        response = requests.get(url + player_name)
+        response = requests.get(config.HISCORES_URL + player_name)
         attempts += 1
     return
 
@@ -135,14 +32,14 @@ def unpack_info(response):
         parts = line.split(",")
         if row <= 24:
             rank, level, current_xp = parts
-            xp[skill_row_order[row]] = current_xp
+            xp[config.SKILL_ROW_ORDER[row]] = current_xp
         else:
             identifier, current_kc = parts
-            if row in kc_mapping.keys():
-                monster = kc_mapping[row]
+            if row in config.KC_MAPPING.keys():
+                monster = config.KC_MAPPING[row]
             else:
                 monster = "Unknown Boss" + " " + str(row)
-            if identifier != "-1" and row not in skip_list:
+            if identifier != "-1" and row not in config.SKIP_LIST:
                 kc[monster] = current_kc
         row = row + 1
     return xp, kc
@@ -171,15 +68,15 @@ def compare_file_to_dict(player_info, player_name, data_type):
             else:
                 if player_info[key] != file_dict[key]:
                     discrepencies[key] = int(player_info[key]) - int(file_dict[key])
-                    if key in skill_row_order and int(player_info[key]) >= 13034431 and int(file_dict[key]) < 13034431:
+                    if key in config.SKILL_ROW_ORDER and int(player_info[key]) >= 13034431 and int(file_dict[key]) < 13034431:
                         new_milestones.append(["99", key])
-                    if key not in skill_row_order and math.floor(int(player_info[key]) / 100) > math.floor(int(file_dict[key]) / 100):
+                    if key not in config.SKILL_ROW_ORDER and math.floor(int(player_info[key]) / 100) > math.floor(int(file_dict[key]) / 100):
                         new_milestones.append(["kc", math.floor(int(player_info[key]) / 100) * 100, key])
         return discrepencies, new_milestones
 
 
 def write_player_info_to_csv(player_info, player_name, data_type):
-    os.makedirs(DATA_DIR, exist_ok=True)
+    os.makedirs(config.DATA_DIR, exist_ok=True)
     
     csv_name = create_data_path(player_name, data_type)
     headers = player_info.keys()
@@ -345,13 +242,13 @@ logger = logging.getLogger(__name__)
 
 def generate_newsletter():
     updates = {}
-    for player in gim_members:
+    for player in config.GIM_MEMBERS:
         try:
             xp_update, kc_update, new_milestones = check_new_info_and_update_data(player)
             character_updates = [xp_update, kc_update, new_milestones]
             logger.info(player)
             logger.info(character_updates)
-            if player in newsletter_members:
+            if player in config.NEWSLETTER_MEMBERS:
                 updates[player] = character_updates
         except Exception as e:
             logger.info(player)

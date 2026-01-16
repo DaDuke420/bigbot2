@@ -9,6 +9,7 @@ from datetime import date
 import pytest
 
 import checking_on_the_boys as bot
+import config
 
 
 class FakeResponse:
@@ -79,7 +80,7 @@ def test_unpack_info_parses_skills_and_kc_mapping_row_32():
 
     # Skills: first 25 should be present (by skill_row_order index)
     assert xp["Total"] == "1000"
-    assert xp[bot.skill_row_order[24]] == str(1000 + 24)
+    assert xp[config.SKILL_ROW_ORDER[24]] == str(1000 + 24)
 
     # KC: rows 32 and 33 should map correctly
     assert kc["Total Clues"] == "562"
@@ -211,8 +212,8 @@ def test_check_new_info_and_update_data_compares_and_writes(monkeypatch, tmp_pat
 
 def test_generate_newsletter_smoke(monkeypatch):
     # Keep newsletter small and deterministic
-    monkeypatch.setattr(bot, "gim_members", ["P1", "P2"])
-    monkeypatch.setattr(bot, "newsletter_members", ["P1", "P2"])
+    monkeypatch.setattr(config, "GIM_MEMBERS", ["P1", "P2"])
+    monkeypatch.setattr(config, "NEWSLETTER_MEMBERS", ["P1", "P2"])
 
     def fake_check(player):
         if player == "P1":
