@@ -2,6 +2,7 @@
 
 import os
 import csv
+import hiscores
 import storage
 import types
 import importlib
@@ -77,7 +78,7 @@ def test_unpack_info_parses_skills_and_kc_mapping_row_32():
 
     response = FakeResponse(skill_lines + filler_kc + [row_32, row_33])
 
-    xp, kc = bot.unpack_info(response)
+    xp, kc = hiscores.unpack_info(response)
 
     # Skills: first 25 should be present (by skill_row_order index)
     assert xp["Total"] == "1000"
@@ -189,7 +190,7 @@ def test_check_new_info_and_update_data_compares_and_writes(monkeypatch, tmp_pat
     def fake_get_player_info(_):
         return ({"Attack": "101"}, {"Zulrah": "200"})
 
-    monkeypatch.setattr(bot, "get_player_info", fake_get_player_info)
+    monkeypatch.setattr(hiscores, "get_player_info", fake_get_player_info)
 
     skill_deltas, kc_deltas, milestones = bot.check_new_info_and_update_data(player)
 
