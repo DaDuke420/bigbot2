@@ -10,17 +10,26 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptDir
 
 # --- Config ---
-$FileToDeploy = "checking_on_the_boys.py"
+# Deploy all Python files under the `bot` folder.
+$SourceDir = ".\bot"
 $KeyPath = ".\Prod Key Pair.pem"
 $RemoteUserHost = "ec2-user@ec2-18-191-173-105.us-east-2.compute.amazonaws.com"
 $RemotePath = "BigBot2/"
 # --------------
 
 # Basic checks
-if (-not (Test-Path $FileToDeploy)) {
-    Write-Error "Cannot find $FileToDeploy in $ScriptDir"
+if (-not (Test-Path $SourceDir)) {
+    Write-Error "Cannot find source directory: $SourceDir"
     exit 1
 }
+
+# Collect files to deploy
+$FilesToDeploy = Get-ChildItem -Path $SourceDir -Filter *.py -File | Select-Object -ExpandProperty Name
+if (-not $FilesToDeploy -or $FilesToDeploy.Count -eq 0) {
+    Write-Error "No .py files found in $SourceDir to deploy."
+    exit 1
+}
+
 if (-not (Test-Path $KeyPath)) {
     Write-Error "Cannot find SSH key file at: $KeyPath"
     exit 1
@@ -59,14 +68,23 @@ if (-not (Get-Command scp -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-# Deploy
-scp -i $KeyPath $FileToDeploy "$RemoteUserHost`:$RemotePath"
-$scpExit = $LASTEXITCODE
-
-if ($scpExit -ne 0) {
-    Write-Host "Deploy failed (scp exit code $scpExit)." -ForegroundColor Red
-    exit $scpExit
+# Deploy files from $SourceDir
+$overallExit = 0
+foreach ($file in $FilesToDeploy) {
+    $localPath = Join-Path $SourceDir $file
+    Write-Host "Deploying $localPath -> $RemoteUserHost:$RemotePath$file" -ForegroundColor Cyan
+    scp -i $KeyPath $localPath "$RemoteUserHost`:$RemotePath$file"
+    $scpExit = $LASTEXITCODE
+    if ($scpExit -ne 0) {
+        Write-Host "Deploy failed for $file (scp exit code $scpExit)." -ForegroundColor Red
+        $overallExit = $scpExit
+        break
+    }
 }
 
-Write-Host "Deploy succeeded." -ForegroundColor Green
+if ($overallExit -ne 0) {
+    exit $overallExit
+}
+
+Write-Host "All files deployed successfully." -ForegroundColor Green
 exit 0
