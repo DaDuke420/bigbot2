@@ -1,5 +1,5 @@
 # hiscores.py
-import config
+from . import config
 import requests
 
 def get_player_info(player_name):

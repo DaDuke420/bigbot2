@@ -1,5 +1,5 @@
 # storage.py
-import config
+from . import config
 import os
 
 def create_data_path(player, data_type):

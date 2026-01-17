@@ -1,5 +1,3 @@
-import os
-import newsletter
 import datetime
 import discord
 import logging

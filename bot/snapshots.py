@@ -1,11 +1,11 @@
 # snapshots.py
-import config
+from . import config
 import csv
-import daily_highs
-import hiscores
+from . import daily_highs
+from . import hiscores
 import math
 import os
-import storage
+from . import storage
 
 def compare_file_to_dict(player_info, player_name, data_type):
     csv_file = storage.create_data_path(player_name, data_type)

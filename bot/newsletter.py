@@ -1,7 +1,7 @@
 # newsletter.py
-import config
+from . import config
 import logging
-import snapshots
+from . import snapshots
 from datetime import date
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

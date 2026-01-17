@@ -1,7 +1,7 @@
 # daily_highs.py
 import csv
 import os
-import storage
+from . import storage
 from datetime import date
 from typing import Dict, Optional, Tuple
 
@@ -65,6 +65,11 @@ def log_new_daily_kc_highs(
         if d > old_hi:
             highs[boss] = (d, as_of.isoformat())
             updated_records[boss] = (d, old_hi)
+
+    # Ensure the CSV parent directory exists, then write back.
+    dirpath = os.path.dirname(csv_path)
+    if dirpath:
+        os.makedirs(dirpath, exist_ok=True)
 
     # Write back (canonical order for stable diffs)
     with open(csv_path, mode="w", newline="") as f:
