@@ -3,15 +3,13 @@
 import os
 import csv
 import hiscores
+import newsletter
 import storage
 import snapshots
-import types
-import importlib
 from datetime import date
 
 import pytest
 
-import checking_on_the_boys as bot
 import config
 
 
@@ -38,12 +36,12 @@ def _isolate_fs(tmp_path, monkeypatch):
     (tmp_path / "data").mkdir(parents=True, exist_ok=True)
 
     # If the module has a configurable data dir constant, patch it:
-    if hasattr(bot, "DATA_DIR"):
-        monkeypatch.setattr(bot, "DATA_DIR", str(tmp_path / "data"))
-    elif hasattr(bot, "DATA_FOLDER"):
-        monkeypatch.setattr(bot, "DATA_FOLDER", str(tmp_path / "data"))
-    elif hasattr(bot, "DATA_PATH"):
-        monkeypatch.setattr(bot, "DATA_PATH", str(tmp_path / "data"))
+    if hasattr(newsletter, "DATA_DIR"):
+        monkeypatch.setattr(newsletter, "DATA_DIR", str(tmp_path / "data"))
+    elif hasattr(newsletter, "DATA_FOLDER"):
+        monkeypatch.setattr(newsletter, "DATA_FOLDER", str(tmp_path / "data"))
+    elif hasattr(newsletter, "DATA_PATH"):
+        monkeypatch.setattr(newsletter, "DATA_PATH", str(tmp_path / "data"))
 
 def _skill_line(rank=1, level=99, xp=0):
     # unpack_info does: str(skill).split(',')[2].strip("'")
@@ -152,7 +150,7 @@ def test_write_player_info_to_csv_roundtrips_dict(tmp_path):
 
 
 def test_format_player_xp_and_kc_updates_to_email_handles_empty():
-    out = bot.format_player_xp_and_kc_updates_to_email({}, {}, [], "DaDuke42069")
+    out = newsletter.format_player_xp_and_kc_updates_to_email({}, {}, [], "DaDuke42069")
     assert "has not played" in out
 
 
@@ -161,7 +159,7 @@ def test_format_player_xp_and_kc_updates_to_email_includes_milestones_and_update
     kc = {"Zulrah": 5}
     milestones = [["99", "Attack"], ["kc", 100, "Zulrah"]]
 
-    out = bot.format_player_xp_and_kc_updates_to_email(xp, kc, milestones, "Mike")
+    out = newsletter.format_player_xp_and_kc_updates_to_email(xp, kc, milestones, "Mike")
     assert "We have milestones to acknowledge" in out
     assert "has achieved 99 Attack" in out
     assert "has surpassed 100 Zulrah kc" in out
@@ -174,7 +172,7 @@ def test_create_email_string_includes_each_player_block():
         "A": [{"Attack": 1}, {}, []],
         "B": [{}, {"Zulrah": 2}, []],
     }
-    email = bot.create_email_string(updates)
+    email = newsletter.create_email_string(updates)
     assert "DaKings GIM Newsletter" in email
     assert "A\n" in email
     assert "B\n" in email
@@ -225,7 +223,7 @@ def test_generate_newsletter_smoke(monkeypatch):
 
     monkeypatch.setattr(snapshots, "check_new_info_and_update_data", fake_check)
 
-    email = bot.generate_newsletter()
+    email = newsletter.generate_newsletter()
     assert "P1" in email
     assert "Attack: 10 xp" in email
     assert "Zulrah: 1 new kc" in email

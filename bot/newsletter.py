@@ -1,17 +1,11 @@
+# newsletter.py
 import config
-import csv
-import daily_highs
-import hiscores
 import logging
-import math
-import os
-import random
-import requests
-import storage
 import snapshots
 from datetime import date
-from typing import Dict, Optional, Tuple
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def format_player_xp_and_kc_updates_to_email(player_xp, player_kc, player_milestones, player_name):
     if not player_xp.keys() and not player_kc.keys() and len(player_milestones) == 0:
@@ -41,9 +35,6 @@ def create_email_string(player_updates):
     for update in player_updates:
         email_body = email_body + format_player_xp_and_kc_updates_to_email(player_updates[update][0], player_updates[update][1], player_updates[update][2], update) + "\n\n"
     return email_body + "Another banger day for the boys! See you next time!"
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 def generate_newsletter():
     updates = {}
