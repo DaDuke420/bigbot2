@@ -2,7 +2,8 @@
 from . import config
 import logging
 from . import snapshots
-from datetime import date
+from . import metadata
+from datetime import date, datetime, timedelta, timezone
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -38,9 +39,15 @@ def create_email_string(player_updates):
 
 def generate_newsletter():
     updates = {}
+    # Decide whether to log daily highs: only when the last newsletter was
+    # generated on the day immediately before today.
+    last = metadata.get_last_newsletter_time()
+    yesterday = date.today() - timedelta(days=1)
+    should_log = last is not None and last.date() == yesterday
+
     for player in config.GIM_MEMBERS:
         try:
-            xp_update, kc_update, new_milestones = snapshots.check_new_info_and_update_data(player)
+            xp_update, kc_update, new_milestones = snapshots.check_new_info_and_update_data(player, log_daily_highs=should_log)
             character_updates = [xp_update, kc_update, new_milestones]
             logger.info(player)
             logger.info(character_updates)
@@ -49,4 +56,8 @@ def generate_newsletter():
         except Exception as e:
             logger.info(player)
             logger.info(f"Not enough data: {e}")
-    return(create_email_string(updates))
+
+    # Record that we generated a newsletter now
+    metadata.set_last_newsletter_time(datetime.now(timezone.utc))
+
+    return create_email_string(updates)

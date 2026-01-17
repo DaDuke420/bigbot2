@@ -48,7 +48,7 @@ def write_player_info_to_csv(player_info, player_name, data_type):
         writer.writeheader()
         writer.writerows([player_info])
 
-def check_new_info_and_update_data(player_name):
+def check_new_info_and_update_data(player_name, log_daily_highs: bool = True):
     player_info, kc_info = hiscores.get_player_info(player_name)
     if not player_info or not kc_info:
         return {}, {}
@@ -64,7 +64,8 @@ def check_new_info_and_update_data(player_name):
     if os.path.exists(kc_csv_name):
         kc_discrepencies, kc_milestones = compare_file_to_dict(kc_info, player_name, "kc")
         new_milestones.extend(kc_milestones)
-    daily_highs.log_new_daily_kc_highs(player_name, kc_discrepencies)
+    if log_daily_highs:
+        daily_highs.log_new_daily_kc_highs(player_name, kc_discrepencies)
     write_player_info_to_csv(player_info, player_name, "skills")
     write_player_info_to_csv(kc_info, player_name, "kc")
     return skill_discrepencies, kc_discrepencies, new_milestones

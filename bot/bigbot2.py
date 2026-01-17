@@ -3,6 +3,8 @@ import discord
 import logging
 import random
 from discord.ext import commands, tasks
+from . import daily_highs
+from . import config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -26,15 +28,15 @@ async def on_message(message):
     if message.author == client.user:
         return
     if message.content == "Bigbot, send a newsletter.":
-        print("generating")
-        newsletter = newsletter.generate_newsletter()
-        await message.channel.send(":smile:")
-        #await message.channel.send("Just wait until tomorrow bro")
+        #print("generating")
+        #newsletter = newsletter.generate_newsletter()
+        #await message.channel.send(":smile:")
+        await message.channel.send("Just wait until tomorrow bro")
     command, _, args = message.content.partition(' ')
     args = args.split(' ')
-    if command in commands.keys():
+    if command in command_list.keys():
         try:
-            await commands[command](args, message)
+            await command_list[command](args, message)
         except Exception as e:
             logger.info(f"Error: {e}")
         
@@ -61,6 +63,41 @@ async def roll(args, message):
     roll = random.randint(1, max_roll)
     await message.channel.send(str(roll))
 
-commands = {"/roll": roll}
+
+async def daily_high(args, message):
+    """Get daily high for a boss.
+
+    Usage:
+      /dailyhigh <BossName> [PlayerName]
+
+    If PlayerName is omitted, returns the highest daily high among
+    `config.NEWSLETTER_MEMBERS`.
+    """
+    if not args or not args[0]:
+        await message.channel.send("Usage: /dailyhigh <BossName> [PlayerName]")
+        return
+
+    boss = args[0]
+    player = args[1] if len(args) > 1 and args[1] else None
+
+    try:
+        if player:
+            val = daily_highs.get_player_daily_high_for_boss(player, boss)
+            if val is None:
+                await message.channel.send(f"No recorded daily high for {boss} for player {player}.")
+            else:
+                await message.channel.send(f"{player} highest one-day {boss} kc: {val}")
+        else:
+            top = daily_highs.get_highest_daily_high_among_members(boss)
+            if top is None:
+                await message.channel.send(f"No recorded daily high for {boss} among newsletter members.")
+            else:
+                top_player, top_val = top
+                await message.channel.send(f"Highest one-day {boss} kc among newsletter members: {top_val} by {top_player}")
+    except Exception as e:
+        logger.info(f"Error in daily_high command: {e}")
+        await message.channel.send("Error fetching daily high.")
+
+command_list = {"/roll": roll, "/dailyhigh": daily_high}
 
 client.run(TOKEN)

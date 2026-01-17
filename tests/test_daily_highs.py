@@ -59,3 +59,26 @@ def test_log_updates_records_when_higher(tmp_path, monkeypatch):
         reader = csv.DictReader(f)
         rows = {r["boss"]: int(r["highest_kc"]) for r in reader}
     assert rows["Zulrah"] == 6
+
+
+def test_get_player_daily_high_for_boss_and_highest_among_members(tmp_path, monkeypatch):
+    """Create per-player daily_highs files and test helper lookups."""
+    monkeypatch.chdir(tmp_path)
+
+    # Player A has Zulrah 3, Player B has Zulrah 7
+    for player, val in [("PlayerA", 3), ("PlayerB", 7)]:
+        csv_path = Path(storage.create_data_path(player, "kc_daily_highs"))
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["boss", "highest_kc", "achieved_on"])
+            writer.writeheader()
+            writer.writerow({"boss": "Zulrah", "highest_kc": val, "achieved_on": "2026-01-01"})
+
+    # get single player high
+    assert daily_highs.get_player_daily_high_for_boss("PlayerA", "Zulrah") == 3
+    assert daily_highs.get_player_daily_high_for_boss("PlayerA", "UnknownBoss") is None
+
+    # highest among provided members
+    top = daily_highs.get_highest_daily_high_among_members("Zulrah", members=["PlayerA", "PlayerB"])
+    assert top == ("PlayerB", 7)
+

@@ -4,6 +4,7 @@ import os
 from . import storage
 from datetime import date
 from typing import Dict, Optional, Tuple
+from . import config
 
 def _safe_int(val) -> Optional[int]:
     """Convert a value to int safely. Returns None if not convertible."""
@@ -108,3 +109,39 @@ def get_highest_one_day_kc_per_boss(
             if boss and hi is not None:
                 result[boss] = hi
     return result
+
+
+def get_player_daily_high_for_boss(player_name: str, boss: str, storage_dir: str = ".") -> Optional[int]:
+    """Return the highest one-day KC for `boss` for `player_name`, or None if not present."""
+    if not boss:
+        return None
+    data = get_highest_one_day_kc_per_boss(player_name, storage_dir=storage_dir)
+    return data.get(boss)
+
+
+def get_highest_daily_high_among_members(boss: str, members: Optional[list] = None, storage_dir: str = ".") -> Optional[Tuple[str, int]]:
+    """Return (player_name, high) for the highest one-day KC of `boss` among `members`.
+
+    If `members` is None, uses `config.NEWSLETTER_MEMBERS`.
+    Returns None when no member has a recorded high for the boss.
+    """
+    if not boss:
+        return None
+    if members is None:
+        members = getattr(config, "NEWSLETTER_MEMBERS", [])
+
+    top_player: Optional[str] = None
+    top_value: Optional[int] = None
+
+    for member in members:
+        highs = get_highest_one_day_kc_per_boss(member, storage_dir=storage_dir)
+        val = highs.get(boss)
+        if val is None:
+            continue
+        if top_value is None or val > top_value:
+            top_value = val
+            top_player = member
+
+    if top_player is None:
+        return None
+    return top_player, top_value

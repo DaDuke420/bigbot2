@@ -42,7 +42,7 @@ def test_generate_newsletter_smoke(monkeypatch):
     monkeypatch.setattr(config, "GIM_MEMBERS", ["P1", "P2"])
     monkeypatch.setattr(config, "NEWSLETTER_MEMBERS", ["P1", "P2"])
 
-    def fake_check(player):
+    def fake_check(player, log_daily_highs=True):
         if player == "P1":
             return ({"Attack": 10}, {"Zulrah": 1}, [])
         return ({}, {}, [])
