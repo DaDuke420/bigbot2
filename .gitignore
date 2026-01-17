@@ -1,3 +1,4 @@
 /bot/__pycache__
 bot/prod_key_pair.pem
 bot/useful stuff.txt
+.vscode/settings.json

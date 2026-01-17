@@ -4,6 +4,7 @@ import os
 import csv
 import hiscores
 import storage
+import snapshots
 import types
 import importlib
 from datetime import date
@@ -105,7 +106,7 @@ def test_compare_file_to_dict_detects_xp_delta_and_99_milestone(tmp_path):
     # New info crosses the threshold => should produce a "99" milestone
     new = {"Attack": 13034431}
 
-    deltas, milestones = bot.compare_file_to_dict(new, player, data_type)
+    deltas, milestones = snapshots.compare_file_to_dict(new, player, data_type)
     assert deltas["Attack"] == 1
     assert ["99", "Attack"] in milestones
 
@@ -123,7 +124,7 @@ def test_compare_file_to_dict_detects_kc_delta_and_100_milestone(tmp_path):
         writer.writerow(prior)
 
     new = {"Zulrah": 200}
-    deltas, milestones = bot.compare_file_to_dict(new, player, data_type)
+    deltas, milestones = snapshots.compare_file_to_dict(new, player, data_type)
 
     assert deltas["Zulrah"] == 1
     assert ["kc", 200, "Zulrah"] in milestones
@@ -134,7 +135,7 @@ def test_write_player_info_to_csv_roundtrips_dict(tmp_path):
     info_type = "skills"
     data = {"Attack": 123, "Strength": 456}
 
-    bot.write_player_info_to_csv(data, player, info_type)
+    snapshots.write_player_info_to_csv(data, player, info_type)
     
     csv_file = storage.create_data_path(player, info_type)
 
@@ -183,8 +184,8 @@ def test_check_new_info_and_update_data_compares_and_writes(monkeypatch, tmp_pat
     player = "Tester"
 
     # Seed existing CSVs
-    bot.write_player_info_to_csv({"Attack": 100}, player, "skills")
-    bot.write_player_info_to_csv({"Zulrah": 199}, player, "kc")
+    snapshots.write_player_info_to_csv({"Attack": 100}, player, "skills")
+    snapshots.write_player_info_to_csv({"Zulrah": 199}, player, "kc")
 
     # Fake fresh hiscore pull
     def fake_get_player_info(_):
@@ -192,7 +193,7 @@ def test_check_new_info_and_update_data_compares_and_writes(monkeypatch, tmp_pat
 
     monkeypatch.setattr(hiscores, "get_player_info", fake_get_player_info)
 
-    skill_deltas, kc_deltas, milestones = bot.check_new_info_and_update_data(player)
+    skill_deltas, kc_deltas, milestones = snapshots.check_new_info_and_update_data(player)
 
     assert skill_deltas["Attack"] == 1
     assert kc_deltas["Zulrah"] == 1
@@ -222,7 +223,7 @@ def test_generate_newsletter_smoke(monkeypatch):
             return ({"Attack": 10}, {"Zulrah": 1}, [])
         return ({}, {}, [])
 
-    monkeypatch.setattr(bot, "check_new_info_and_update_data", fake_check)
+    monkeypatch.setattr(snapshots, "check_new_info_and_update_data", fake_check)
 
     email = bot.generate_newsletter()
     assert "P1" in email
