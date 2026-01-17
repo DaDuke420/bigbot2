@@ -26,7 +26,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Run tests
-python -m pytest -q
+python -m pytest tests -q
 $exitCode = $LASTEXITCODE
 
 if ($exitCode -eq 0) {
